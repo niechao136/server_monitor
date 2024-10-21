@@ -2,6 +2,7 @@ import axios, { AxiosRequestConfig, AxiosResponse } from 'axios'
 import { Vue } from 'vue-property-decorator'
 import { Environment } from '@/config'
 import { closeLoading, closeTip, errorToast, showTip } from '@/SRPFramework/stores'
+import { LoginStore } from '@/stores'
 
 const config: AxiosRequestConfig = {
   timeout: 300 * 1000, // Timeout
@@ -13,8 +14,21 @@ const config: AxiosRequestConfig = {
 
 const service = axios.create(config)
 
+const NOT_NEED_TOKEN: string[] = [
+  'server/info',
+  'login',
+  'user/forgetpwd',
+  'user/resetpwd',
+]
+
 service.interceptors.request.use(
     config => {
+      if (!NOT_NEED_TOKEN.find(o => config.url.endsWith(o))) {
+        config.data = {
+          ...config.data,
+          token: new LoginStore()._token.token
+        }
+      }
       return config
     },
     error => {
