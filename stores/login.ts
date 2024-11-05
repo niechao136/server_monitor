@@ -2,7 +2,7 @@ import { Store, Pinia } from 'pinia-class-component'
 import { LoginModel } from '@/../components'
 import { post } from '@/api'
 import { COOKIE_KEY, CRYPTO_KEY } from '@/config'
-import { aesDecrypt, aesEncrypt, getCookie, md5Encrypt, setCookie } from '@/utils'
+import { aesDecrypt, aesEncrypt, getCookie, md5Encrypt, rmCookie, setCookie } from '@/utils'
 
 const decryptToken = (token: string) => {
   const decrypted = aesDecrypt(token, CRYPTO_KEY.TOKEN)
@@ -26,9 +26,6 @@ export class LoginStore extends Pinia {
   //#region Login
 
   _token: Token.Info = null
-  get token() {
-    return checkToken() ?? this._token
-  }
   async login(form: LoginModel.IUserInfo) {
     const data = {
       password: md5Encrypt(form.password),
@@ -42,13 +39,23 @@ export class LoginStore extends Pinia {
     }
     return res?.data
   }
+  async logout() {
+    const res = await post({ url: 'logout' })
+    if (res?.data?.status === 1) {
+      rmCookie(COOKIE_KEY.TOKEN)
+      this._token = null
+    }
+  }
+  initToken() {
+    this._token = checkToken() ?? this._token
+  }
   //#endregion
   //#region User
 
   owner: User.Info = null
   async getOwner() {
-    const { user_id } = this._token
-    const res = await post<Result.User>({ url: 'user/info', data: { user_id }})
+    const data = { user_id: this._token?.user_id }
+    const res = await post<Result.User>({ url: 'user/info', data })
     if (res?.data?.status === 1) {
       this.owner = res.data?.user ?? {}
       this.current_acc = this.acc_list.find(o => o.id === this.owner?.acc_id)

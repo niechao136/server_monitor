@@ -1,6 +1,7 @@
 import { Vue } from 'vue-property-decorator'
 import VueRouter, { RouteConfig, RawLocation } from 'vue-router'
 import { setLayoutBg, setTitle } from '@/SRPFramework/stores'
+import { LoginStore } from '@/stores'
 
 
 // 此VueRouter是自己自定義引入暴露出來的，即是自定義的，以下的VueRouter同樣是這樣
@@ -18,9 +19,19 @@ const routes: RouteConfig[] = [
     meta: { title: 'Router_/login' },
   },
   {
+    path: '/resetpwd',
+    name: 'resetpwd',
+    component: async () => await import(/* webpackChunkName: "chunk_resetpwd" */ '@/pages/pwd/resetpwd.vue'),
+    meta: { title: 'Router_/resetpwd' },
+  },
+  {
     path: '/',
     component: async () => await import(/* webpackChunkName: "chunk_layout" */ '@/layouts/Layout.vue'),
     children: [
+      {
+        path: '/',
+        redirect: { name: 'overview' },
+      },
       {
         path: '/overview',
         name: 'overview',
@@ -39,6 +50,10 @@ const routes: RouteConfig[] = [
         component: async () => await import(/* webpackChunkName: "chunk_key" */ '@/pages/key/key.vue'),
         meta: { title: 'Router_/key' },
       },
+      {
+        path: '*',
+        redirect: { name: 'overview' },
+      },
     ],
   },
   {
@@ -54,15 +69,30 @@ const router = new VueRouter({
   routes,
 })
 
+const NOT_NEED_HEAD = [
+  '/login',
+  '/resetpwd',
+]
+
+const NOT_NEED_LOGIN = [
+  '/login',
+]
+
 router.afterEach((to) => {
   window.document.title = Vue.prototype.$i18n[to.meta.title] ?? 'WISE-iService'
-  const title = []
-  if (to.meta.sub) {
-    title.push(Vue.prototype.$i18n[to.meta.sub])
+  if (!NOT_NEED_HEAD.find(s => to.path.startsWith(s))) {
+    const title = []
+    if (to.meta.sub) {
+      title.push(Vue.prototype.$i18n[to.meta.sub])
+    }
+    title.push(Vue.prototype.$i18n[to.meta.title])
+    setTitle(title)
+    setLayoutBg('#F0F2F5')
   }
-  title.push(Vue.prototype.$i18n[to.meta.title])
-  setTitle(title)
-  setLayoutBg('#F0F2F5')
+  if (!NOT_NEED_LOGIN.find(s => to.path.startsWith(s))) {
+    const login = new LoginStore()
+    if (!login._token) login.initToken()
+  }
 })
 
 export default router

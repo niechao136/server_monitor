@@ -18,6 +18,9 @@ declare namespace Result {
   type AccList = Base & {
     accs?: Account.Info[]
   }
+  type KeyList = Base & {
+    access_keys?: Key.Info[]
+  }
 }
 
 declare namespace Token {
@@ -64,5 +67,30 @@ declare namespace Account {
     initial_date?: string
     name?: string
     op_acc_id?: string
+  }
+}
+
+declare namespace Key {
+  type Info = {
+    acc_id?: string
+    access_key?: string
+    description?: string
+    expire_ts?: string
+    name?: string
+    privilege_tree?: Tree
+  }
+  type Tree = {
+    api?: Api
+  }
+  type Api = {
+    monitor_data?: Data
+  }
+  type Data = {
+    update?: string
+  }
+  type Item = Info & {
+    check?: string
+    checked?: string
+    disabled?: boolean
   }
 }
